@@ -48,7 +48,7 @@ def check_compatibility(classified):
 st.write("### Thermal Hazard Heatmap")
 required_columns = {"Chemical", "DSC_OnsetTemp", "ARC_Tad", "RC1e_Qmax"}
 if required_columns.issubset(df.columns):
-try:
+    try:
 thermal_df = df[["Chemical", "DSC_OnsetTemp", "ARC_Tad", "RC1e_Qmax"]].set_index("Chemical")
     st.write("Thermal Hazard Data")
     st.dataframe(thermal_df)
