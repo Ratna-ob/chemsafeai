@@ -60,6 +60,8 @@ if required_columns.issubset(df.columns):
 
 except Exception as e:
     st.error(f"Error generating thermal heatmap: {e}")
+else:
+st.warning("Thermal hazard data columns not found. Ensure your Excel file includes: DSC_OnsetTemp, ARC_Tad, RC1e_Qmax")
 
     
 def generate_heatmap_matrix(classified):
