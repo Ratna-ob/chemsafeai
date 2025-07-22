@@ -51,10 +51,10 @@ def generate_heatmap_matrix(classified):
     chems =[chem for chem, _ in classified]
     matrix = pd.DataFrame(0, index=chems, columns=chems)
     for i in range(len(classified)):
-    for j in range(i + 1, len(classified)):
-        c1, class1 = classified[i]
-        c2, class2 = classified[j]
-        risk = compatibility_matrix.get((class1, class2)) or compatibility_matrix.get((class2, class1))
+        for j in range(i + 1, len(classified)):
+            c1, class1 = classified[i]
+            c2, class2 = classified[j]
+            risk = compatibility_matrix.get((class1, class2)) or compatibility_matrix.get((class2, class1))
         if risk:
             matrix.loc[c1, c2] = risk[1]
             matrix.loc[c2, c1] = risk[1]
