@@ -47,7 +47,7 @@ def check_compatibility(classified):
     return risk_messages
     
 def generate_heatmap_matrix(classified):
-chems = [chem for chem, _ in classified]
+chems =[chem for chem, _ in classified]
 matrix = pd.DataFrame(0, index=chems, columns=chems)
 for i in range(len(classified)):
 for j in range(i + 1, len(classified)):
