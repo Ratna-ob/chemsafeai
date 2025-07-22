@@ -46,7 +46,7 @@ def check_compatibility(classified):
                 risk_messages.append(f"{c1} ({class1}) + {c2} ({class2}) → {risk}")
     return risk_messages
 st.write("### Thermal Hazard Heatmap")
-required_columns = {"Chemical", "DSC_OnsetTemp", "ARC_Tad", "RC1e_Qmax"}
+    required_columns = {"Chemical", "DSC_OnsetTemp", "ARC_Tad", "RC1e_Qmax"}
 if required_columns.issubset(df.columns):
     try:
         thermal_df = df[["Chemical", "DSC_OnsetTemp", "ARC_Tad", "RC1e_Qmax"]].set_index("Chemical")
