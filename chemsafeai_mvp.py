@@ -47,7 +47,6 @@ def check_compatibility(classified):
     return risk_messages
     
 def generate_heatmap_matrix(classified):
-    
     chems =[chem for chem, _ in classified]
     matrix = pd.DataFrame(0, index=chems, columns=chems)
     for i in range(len(classified)):
@@ -58,7 +57,7 @@ def generate_heatmap_matrix(classified):
         if risk:
             matrix.loc[c1, c2] = risk[1]
             matrix.loc[c2, c1] = risk[1]
-return matrix
+    return matrix
 
 # ─── PDF Report Generator ──────────────────────────────────────────────────────
 def generate_pdf_report(classified_data, risk_messages, thermal_df=None):
