@@ -6,6 +6,8 @@ import pandas as pd
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 import io
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 # ─── Chemical Compatibility Matrix ─────────────────────────────────────────────
 compatibility_matrix = {
@@ -43,6 +45,19 @@ def check_compatibility(classified):
             if risk:
                 risk_messages.append(f"{c1} ({class1}) + {c2} ({class2}) → {risk}")
     return risk_messages
+    
+def generate_heatmap_matrix(classified):
+chems = [chem for chem, _ in classified]
+matrix = pd.DataFrame(0, index=chems, columns=chems)
+for i in range(len(classified)):
+for j in range(i + 1, len(classified)):
+c1, class1 = classified[i]
+c2, class2 = classified[j]
+risk = compatibility_matrix.get((class1, class2)) or compatibility_matrix.get((class2, class1))
+if risk:
+matrix.loc[c1, c2] = risk[1]
+matrix.loc[c2, c1] = risk[1]
+return matrix
 
 # ─── PDF Report Generator ──────────────────────────────────────────────────────
 def generate_pdf_report(classified_data, risk_messages, thermal_df=None):
