@@ -3,8 +3,11 @@
 
 import streamlit as st
 import pandas as pd
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+import io
 
-# Sample chemical compatibility rules (simplified)
+# ─── Chemical Compatibility Matrix ─────────────────────────────────────────────
 compatibility_matrix = {
     ("Acid", "Base"): "High Risk: Acid-base neutralization",
     ("Oxidizer", "Reducer"): "Critical Risk: Redox reaction",
@@ -13,7 +16,7 @@ compatibility_matrix = {
     ("Water-Reactive", "Water"): "Danger: Violent reaction"
 }
 
-# Sample chemical class database (simplified)
+# ─── Sample Chemical Class Database ────────────────────────────────────────────
 chemical_classes = {
     "Sulfuric Acid": "Acid",
     "Sodium Hydroxide": "Base",
@@ -25,9 +28,11 @@ chemical_classes = {
     "Water": "Water"
 }
 
+# ─── Classification Logic ──────────────────────────────────────────────────────
 def classify_chemicals(chemicals):
     return [(chem, chemical_classes.get(chem, "Unknown")) for chem in chemicals]
 
+# ─── Compatibility Check ───────────────────────────────────────────────────────
 def check_compatibility(classified):
     risk_messages = []
     for i in range(len(classified)):
@@ -36,34 +41,103 @@ def check_compatibility(classified):
             c2, class2 = classified[j]
             risk = compatibility_matrix.get((class1, class2)) or compatibility_matrix.get((class2, class1))
             if risk:
-                risk_messages.append(f"⚠️ {c1} ({class1}) + {c2} ({class2}) → {risk}")
+                risk_messages.append(f"{c1} ({class1}) + {c2} ({class2}) → {risk}")
     return risk_messages
 
-st.title("ChemSafeAI - Reactive Compatibility Checker")
+# ─── PDF Report Generator ──────────────────────────────────────────────────────
+def generate_pdf_report(classified_data, risk_messages, thermal_df=None):
+    buffer = io.BytesIO()
+    c = canvas.Canvas(buffer, pagesize=letter)
+    width, height = letter
+
+    c.setFont("Helvetica-Bold", 16)
+    c.drawString(40, height - 40, "ChemSafeAI Compatibility Risk Report")
+
+    y = height - 80
+    c.setFont("Helvetica", 12)
+
+    c.drawString(40, y, "Chemical Classifications:")
+    y -= 20
+    for chem, cls in classified_data:
+        c.drawString(60, y, f"- {chem}: {cls}")
+        y -= 16
+        if y < 50:
+            c.showPage()
+            y = height - 40
+
+    y -= 10
+    c.drawString(40, y, "Detected Compatibility Risks:")
+    y -= 20
+    if risk_messages:
+        for msg in risk_messages:
+            c.drawString(60, y, f"- {msg}")
+            y -= 16
+            if y < 50:
+                c.showPage()
+                y = height - 40
+    else:
+        c.drawString(60, y, "No critical risks detected.")
+        y -= 20
+
+    if thermal_df is not None:
+        y -= 20
+        c.drawString(40, y, "Thermal Hazard Data (DSC, ARC, RC1e):")
+        y -= 20
+        for _, row in thermal_df.iterrows():
+            desc = f"{row['Chemical']}: DSC={row.get('DSC_OnsetTemp','N/A')}°C, ARC_Tad={row.get('ARC_Tad','N/A')}°C, RC1e_Qmax={row.get('RC1e_Qmax','N/A')} J/g"
+            c.drawString(60, y, f"- {desc}")
+            y -= 16
+            if y < 50:
+                c.showPage()
+                y = height - 40
+
+    c.showPage()
+    c.save()
+    buffer.seek(0)
+    return buffer
+
+# ─── Streamlit UI ──────────────────────────────────────────────────────────────
+st.title("ChemSafeAI – Reactive Compatibility & Thermal Hazard Checker")
+
 st.markdown("""
-Upload a batch list and get chemical compatibility risk warnings based on known reactive groups.
+Upload a batch Excel file with chemical names and optional thermal hazard data. The app will analyze incompatibilities and generate a downloadable PDF report.
 """)
 
-uploaded_file = st.file_uploader("Upload batch Excel file (Chemical column required)", type=["xlsx"])
+uploaded_file = st.file_uploader("📤 Upload Excel File", type=["xlsx"])
 
 if uploaded_file:
     try:
         df = pd.read_excel(uploaded_file)
-        st.write("### Uploaded Batch Sheet", df)
 
-        chemicals = df['Chemical'].tolist()
-        classified = classify_chemicals(chemicals)
+        st.subheader("📋 Uploaded Data")
+        st.write(df)
 
-        st.write("### Chemical Classifications")
-        st.dataframe(pd.DataFrame(classified, columns=["Chemical", "Class"]))
-
-        st.write("### Compatibility Risk Report")
-        risks = check_compatibility(classified)
-        if risks:
-            for msg in risks:
-                st.warning(msg)
+        if 'Chemical' not in df.columns:
+            st.error("❌ Excel file must contain a 'Chemical' column.")
         else:
-            st.success("No critical compatibility risks detected.")
+            chemicals = df['Chemical'].tolist()
+            classified = classify_chemicals(chemicals)
+
+            st.subheader("🔬 Chemical Classifications")
+            st.dataframe(pd.DataFrame(classified, columns=["Chemical", "Class"]))
+
+            st.subheader("⚠️ Compatibility Risk Report")
+            risks = check_compatibility(classified)
+
+            if risks:
+                for msg in risks:
+                    st.warning(msg)
+            else:
+                st.success("✅ No critical compatibility risks detected.")
+
+            st.subheader("📄 Generate PDF Report")
+            pdf_buffer = generate_pdf_report(classified, risks, df)
+            st.download_button(
+                label="📥 Download PDF Report",
+                data=pdf_buffer,
+                file_name="chemsafeai_report.pdf",
+                mime="application/pdf"
+            )
 
     except Exception as e:
-        st.error(f"Error: {e}")
+        st.error(f"Error processing file: {e}")
