@@ -49,14 +49,14 @@ st.write("### Thermal Hazard Heatmap")
 required_columns = {"Chemical", "DSC_OnsetTemp", "ARC_Tad", "RC1e_Qmax"}
 if required_columns.issubset(df.columns):
     try:
-thermal_df = df[["Chemical", "DSC_OnsetTemp", "ARC_Tad", "RC1e_Qmax"]].set_index("Chemical")
-    st.write("Thermal Hazard Data")
-    st.dataframe(thermal_df)
+        thermal_df = df[["Chemical", "DSC_OnsetTemp", "ARC_Tad", "RC1e_Qmax"]].set_index("Chemical")
+        st.write("Thermal Hazard Data")
+        st.dataframe(thermal_df)
 
-    st.write("#### Heatmap (DSC, ARC, RC1e)")
-    fig, ax = plt.subplots(figsize=(8, 5))
-    sns.heatmap(thermal_df, annot=True, cmap="YlOrRd", fmt=".0f", ax=ax, cbar_kws={'label': 'Thermal Parameter Value'})
-    st.pyplot(fig)
+        st.write("#### Heatmap (DSC, ARC, RC1e)")
+        fig, ax = plt.subplots(figsize=(8, 5))
+        sns.heatmap(thermal_df, annot=True, cmap="YlOrRd", fmt=".0f", ax=ax, cbar_kws={'label': 'Thermal Parameter Value'})
+        st.pyplot(fig)
 
 except Exception as e:
     st.error(f"Error generating thermal heatmap: {e}")
